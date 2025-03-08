@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ping Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .header {
+            font-size: 30px;
+            color: #333;
+            margin-bottom: 40px;
+        }
+        .server-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+        }
+        .server-item {
+            background-color: #ffffff;
+            padding: 20px;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+        .server-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0px 8px 12px rgba(0, 0, 0, 0.15);
+        }
+        .server-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        .ping-time {
+            font-size: 18px;
+            margin-top: 10px;
+            color: #777;
+        }
+        .ping-time.success {
+            color: #4caf50;
+        }
+        .ping-time.error {
+            color: #f44336;
+        }
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            margin-top: 40px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">Ping Test</div>
+
+    <!-- Input field for custom server -->
+    <input type="text" id="server-address" placeholder="Enter server IP or Domain" />
+    <button onclick="startCustomPing()">Start Ping Test</button>
+
+    <div class="server-list">
+        <!-- Static server items -->
+        <div class="server-item" id="facebook-server">
+            <div class="server-name">Facebook</div>
+            <div class="ping-time" id="facebook-ping">Pinging...</div>
+        </div>
+
+        <div class="server-item" id="tiktok-server">
+            <div class="server-name">TikTok</div>
+            <div class="ping-time" id="tiktok-ping">Pinging...</div>
+        </div>
+
+        <div class="server-item" id="pubg-server">
+            <div class="server-name">PUBG</div>
+            <div class="ping-time" id="pubg-ping">Pinging...</div>
+        </div>
+    </div>
+
+    <div id="ping-result" class="server-list">
+        <!-- Dynamic ping result for custom server will appear here -->
+    </div>
+
+</div>
+
+<script>
+    let pingInterval;
+
+    // List of static servers with their names and IPs
+    const servers = [
+        {name: 'Facebook', address: '157.240.22.35'},
+        {name: 'TikTok', address: '162.125.65.3'},
+        {name: 'PUBG', address: '139.9.7.13'}
+    ];
+
+    // Function to simulate continuous Ping Test for a custom server
+    function startCustomPing() {
+        const serverAddress = document.getElementById('server-address').value;
+        const pingResultDiv = document.getElementById('ping-result');
+
+        if (!serverAddress) {
+            alert("Please enter a valid IP or Domain.");
+            return;
+        }
+
+        // Clear any existing ping intervals
+        if (pingInterval) {
+            clearInterval(pingInterval);
+        }
+
+        pingResultDiv.innerHTML = `
+            <div class="server-item">
+                <div class="server-name">Pinging ${serverAddress}</div>
+                <div class="ping-time" id="ping-time">Pinging...</div>
+            </div>
+        `;
+
+        const pingElement = document.getElementById('ping-time');
+
+        // Start the Ping test for the custom server every 2 seconds
+        pingInterval = setInterval(() => {
+            const startTime = new Date().getTime();
+
+            // Perform the ping using Fetch to the server
+            fetch(`https://dns.google/resolve?name=${serverAddress}`)
+                .then(response => {
+                    const endTime = new Date().getTime();
+                    const pingTime = endTime - startTime;
+                    pingElement.innerHTML = `${pingTime} ms`;
+                    pingElement.classList.remove("error");
+                    pingElement.classList.add("success");
+                })
+                .catch(() => {
+                    pingElement.innerHTML = `Ping failed for ${serverAddress}`;
+                    pingElement.classList.remove("success");
+                    pingElement.classList.add("error");
+                });
+        }, 2000); // Ping every 2 seconds
+    }
+
+    // Function to start pinging static servers
+    function startStaticPing() {
+        servers.forEach(server => {
+            const pingElement = document.getElementById(`${server.name.toLowerCase()}-ping`);
+            const serverItem = document.getElementById(`${server.name.toLowerCase()}-server`);
+            pingElement.innerHTML = `Pinging ${server.name}...`;
+
+            // Start the Ping test for each static server every 2 seconds
+            setInterval(() => {
+                const startTime = new Date().getTime();
+
+                // Perform the ping using Fetch to the server
+                fetch(`https://dns.google/resolve?name=${server.address}`)
+                    .then(response => {
+                        const endTime = new Date().getTime();
+                        const pingTime = endTime - startTime;
+                        pingElement.innerHTML = `${pingTime} ms`;
+                        pingElement.classList.remove("error");
+                        pingElement.classList.add("success");
+                    })
+                    .catch(() => {
+                        pingElement.innerHTML = `Ping failed for ${server.name}`;
+                        pingElement.classList.remove("success");
+                        pingElement.classList.add("error");
+                    });
+            }, 2000); // Ping every 2 seconds
+        });
+    }
+
+    // Start pinging static servers when the page loads
+    window.onload = startStaticPing;
+</script>
+
+</body>
+</html>
